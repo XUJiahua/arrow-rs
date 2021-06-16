@@ -395,6 +395,7 @@ impl<R: Read> Reader<R> {
         if let Some(c) = delimiter {
             reader_builder.delimiter(c);
         }
+        // escape/quote/terminator in no use...
         reader_builder.escape(escape);
         if let Some(c) = quote {
             reader_builder.quote(c);
@@ -413,6 +414,7 @@ impl<R: Read> Reader<R> {
         bounds: Bounds,
         projection: Option<Vec<usize>>,
     ) -> Self {
+        // bounds: data range
         let (start, end) = match bounds {
             None => (0, usize::MAX),
             Some((start, end)) => (start, end),
@@ -432,10 +434,13 @@ impl<R: Read> Reader<R> {
             }
         }
 
+        // read data into StringRecords
         // Initialize batch_records with StringRecords so they
         // can be reused across batches
         let mut batch_records = Vec::with_capacity(batch_size);
+        // String::new() empty size
         batch_records.resize_with(batch_size, Default::default);
+        // use as cache???
 
         Self {
             schema,
@@ -453,10 +458,12 @@ impl<R: Read> Iterator for Reader<R> {
     type Item = Result<RecordBatch>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        // return next record batch
         let remaining = self.end - self.line_number;
 
         let mut read_records = 0;
         for i in 0..min(self.batch_size, remaining) {
+            // StringRecord is from csv crate
             match self.reader.read_record(&mut self.batch_records[i]) {
                 Ok(true) => {
                     read_records += 1;
@@ -477,8 +484,10 @@ impl<R: Read> Iterator for Reader<R> {
             return None;
         }
 
+        // parse data reply on schema
         // parse the batches into a RecordBatch
         let result = parse(
+            // slice
             &self.batch_records[..read_records],
             &self.schema.fields(),
             Some(self.schema.metadata.clone()),
@@ -486,6 +495,7 @@ impl<R: Read> Iterator for Reader<R> {
             self.line_number,
         );
 
+        // update current line_number
         self.line_number += read_records;
 
         Some(result)
@@ -500,11 +510,13 @@ fn parse(
     projection: &Option<Vec<usize>>,
     line_number: usize,
 ) -> Result<RecordBatch> {
+    // what is projection??? select only 2 fields from csv which has 5 fields
     let projection: Vec<usize> = match projection {
         Some(ref v) => v.clone(),
         None => fields.iter().enumerate().map(|(i, _)| i).collect(),
     };
 
+    // for every field
     let arrays: Result<Vec<ArrayRef>> = projection
         .iter()
         .map(|i| {

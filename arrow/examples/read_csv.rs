@@ -40,9 +40,10 @@ fn main() {
         let mut csv =
             csv::Reader::new(file, Arc::new(schema), false, None, 1024, None, None);
         let _batch = csv.next().unwrap().unwrap();
-        #[cfg(feature = "prettyprint")]
-        {
-            print_batches(&[_batch]).unwrap();
-        }
+        println!("{:?}", _batch);
+        // #[cfg(feature = "prettyprint")]
+        // {
+        //     print_batches(&[_batch]).unwrap();
+        // }
     }
 }

@@ -32,9 +32,10 @@ fn main() {
             .infer_schema(Some(100));
         let mut csv = builder.build(file).unwrap();
         let _batch = csv.next().unwrap().unwrap();
-        #[cfg(feature = "prettyprint")]
-        {
-            print_batches(&[_batch]).unwrap();
-        }
+        println!("{:?}", _batch);
+        // #[cfg(feature = "prettyprint")]
+        // {
+        //     print_batches(&[_batch]).unwrap();
+        // }
     }
 }
